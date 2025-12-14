@@ -1,83 +1,85 @@
 #!/usr/bin/env python
-import antigravity
-import sympy as sp
-import numpy as np
-import matplotlib.pyplot as plt
 
-def resolver_lane_emden_adomian(n_terminos):
+"""
+# SPDX-FileType: SOURCE
+# SPDX-FileType: APPLICATION
+# SPDX-FileCopyrightText: © 2025 Matihus Alberth Molina Larios <matihus.molina@unmsm.edu.pe> Carlos Alonso Aznarán Laos <caznaranl@uni.pe>
+# SPDX-License-Identifier: GPL-2.0-or-later
+This script calculates the approximate solution of the Lane-Emden equation
+using the Adomian Decomposition Method (ADM).
+Based on the work "Adomian Decomposition Method" by Juan Pablo Ballén López and Pablo Alberto León Velasco.
+Retrieved from https://repository.eafit.edu.co/server/api/core/bitstreams/7c769b30-4d00-4f73-985d-df1a256e5fa8/content
+"""
+
+from sympy import simplify
+from sympy.abc import c, lamda, s, t, xi
+from sympy.core import Integer
+from sympy.core import diff as D
+from sympy.functions.combinatorial.factorials import factorial
+from sympy.integrals import integrate
+from sympy.printing import pprint
+
+
+def solve_lane_emden_adomian(num_terms):
     """
-    Calcula la solución aproximada de la ecuación de Lane-Emden usando ADM.
+    Calculates the approximate solution of the Lane-Emden equation using ADM.
 
-    Parámetros:
-    - indice_m (int/float/Symbol): El índice politrópico 'm' (puede ser número o símbolo).
-    - n_terminos (int): Número de términos de la serie a calcular.
+    Parameters:
+    - num_terms (int): The number of series terms to calculate.
 
-    Retorna:
-    - solucion_aprox: La suma de los términos calculados.
-    - componentes: Lista con cada theta_k individual.
+    Returns:
+    - approx_solution: The sum of the calculated terms.
+    - components: A list containing each individual theta_k.
     """
-    # 1. Definir variables
-    xi = sp.Symbol('xi')
-    lam = sp.Symbol('lambda')
-    C = sp.Symbol('C')
 
-    print(f"--- Solucionando Lane-Emden para (y^2-C)^1.5 con {n_terminos} términos ---\n")
+    print(f"--- Solving Lane-Emden for (y^2-C)^1.5 with {num_terms} terms ---\n")
 
-    # Lista para guardar las componentes theta_0, theta_1, ...
+    # List to store the components theta_0, theta_1, ...
     thetas = []
 
-    # 2. Paso inicial: theta_0 = 0 (por la condición inicial y(0)=0)
-    theta_0 = sp.Integer(1)
+    # Initial step: theta_0 = 1 (based on the problem's initial conditions)
+    theta_0 = Integer(1)
     thetas.append(theta_0)
     print(f"theta_0 = {theta_0}")
 
-    # Función auxiliar para el operador inverso L^(-1)
+    # Helper function for the inverse operator L^(-1)
     # L^(-1)(f) = Integral_0^x ( s^(-2) * Integral_0^s ( t^2 * f(t) ) dt ) ds
-    def operador_inverso(func, variable):
-        t = sp.Symbol('t', dummy=True)
-        s = sp.Symbol('s', dummy=True)
-        # Integral interna: int(t^2 * f(t), t, 0, s)
-        int_interna = sp.integrate(t **2 * func.subs(variable, t), (t, 0, s))
-        # Integral externa: int(s^(-2) * int_interna, s, 0, x)
-        return sp.integrate(s**(-2) * int_interna, (s, 0, variable))
+    def inverse_operator(func, variable):
+        # Inner integral: int(t^2 * f(t), t, 0, s)
+        inner_integral = integrate(t**2 * func.subs(variable, t), (t, 0, s))
+        # Outer integral: int(s^(-2) * inner_integral, s, 0, x)
+        return integrate(s ** (-2) * inner_integral, (s, 0, variable))
 
-    # 3. Iteración para encontrar theta_1, theta_2...
-    for k in range(n_terminos - 1):
-        # A. Construir el Polinomio de Adomian A_k para f(u) = u^m
-        # Usamos la definición: A_k = (1/k!) * d^k/d(lam)^k [ (sum(u_i*lam^i))^m ] | lam=0
+    # Iteration to find theta_1, theta_2...
+    for k in range(num_terms - 1):
+        # A. Construct the Adomian Polynomial A_k for f(u) = u^m
+        # Definition: A_k = (1/k!) * d^k/d(lamda)^k [ (sum(u_i*lamda^i))^m ] | lamda=0
 
-        # Construir la suma parcial u(lambda)
-        suma_parametrizada = sum(thetas[i] * lam**i for i in range(len(thetas)))
+        # Build the parametrized partial sum u(lamda)
+        parametrized_sum = sum(thetas[i] * lamda**i for i in range(len(thetas)))
 
-        # Aplicar la no-linealidad u^m
-        funcion_no_lineal = (suma_parametrizada**2-C)**1.5
+        # Apply the non-linearity (u^2 - c)^1.5
+        non_linear_function = (parametrized_sum**2 - c) ** 1.5
 
-        # Derivar k veces respecto a lambda
-        derivada = sp.diff(funcion_no_lineal, lam, k)
+        # Differentiate k times with respect to lamda
+        derivative = D(non_linear_function, lamda, k)
 
-        # Evaluar en lambda = 0 y dividir por k!
-        A_k = derivada.subs(lam, 0) / sp.factorial(k)
+        # Evaluate at lamda = 0 and divide by k!
+        A_k = derivative.subs(lamda, 0) / factorial(k)
 
-        # B. Calcular el siguiente término: theta_{k+1} = - L^(-1)( A_k )
-        siguiente_theta = - operador_inverso(A_k, xi)
-        siguiente_theta = sp.simplify(siguiente_theta)
+        # B. Calculate the next term: theta_{k+1} = - L^(-1)( A_k )
+        next_theta = -inverse_operator(A_k, xi)
+        next_theta = simplify(next_theta)
 
-        thetas.append(siguiente_theta)
-        print(f"theta_{k+1} = {siguiente_theta}")
+        thetas.append(next_theta)
+        print(f"theta_{k + 1} = {next_theta}")
 
-    # 4. Construir la solución final
-    solucion_aprox = sum(thetas)
-    print("\nSolución aproximada (primeros términos):")
-    sp.pprint(solucion_aprox)
+    # Construct the final solution
+    approx_solution = sum(thetas)
+    print("\nApproximate solution (first terms):")
+    pprint(approx_solution)
 
-    return solucion_aprox, thetas
+    return approx_solution, thetas
 
 
-
-# --- EJEMPLOS DE USO ---
-
-xi = sp.Symbol('xi') # Define xi for global use in plot_comparison calls
-
-# Caso 3: e^y simbólico (Solución general)
-sol_gen, _ = resolver_lane_emden_adomian(7)
-
+sol_gen, _ = solve_lane_emden_adomian(7)
