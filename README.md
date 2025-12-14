@@ -8,7 +8,7 @@ This project refers to a poster accepted at the VII International Meeting on Mat
 ### Abstract
 
 The aim of this talk is to present a well-suited approximation of a
-internal structure of a selfgravitating polytrophic body model which
+internal structure of a selfgravitating polytropic body model which
 consists of a type Lane-Emden equation [3], a second order nonlinear ODE.
 First, we will discuss an efficient algorithm called Adomian
 decomposition method [1] which server as an approximation in terms of
