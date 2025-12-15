@@ -28,4 +28,4 @@ American Journal of Computational Mathematics, 4:242–253, 2014.
 Mass Maintaining Its Volume by Its Internal Heat and Depending on the Laws of Gases Known
 to Terrestrial Experiment. The American Journal of Science and Arts, 50:57–74, 1870.
 
-![](assets/poster.png)
+![https://maticus-7.github.io/lane-emden](assets/poster.png)
